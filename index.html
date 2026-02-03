@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧪 GPT-5 Lab (V13.1 - Cost Optimized)</title>
+    <style>
+        /* === V13.0 風格 (維持原案) === */
+        :root { --primary: #2563eb; --judge: #7c3aed; --bg: #f8fafc; --card: #ffffff; --success: #10b981; --danger: #ef4444; --warn: #f97316; }
+        body { font-family: "Microsoft JhengHei", "Heiti TC", sans-serif; background: var(--bg); color: #1e293b; padding: 20px; max-width: 1800px; margin: 0 auto; }
+        
+        header { text-align: center; padding-bottom: 20px; border-bottom: 2px solid #e2e8f0; margin-bottom: 30px; }
+        h1 { margin: 0; font-size: 2em; font-weight: 800; color: #0f172a; }
+        /* Badge 更新為 Cost Optimized */
+        .badge { background: #059669; color: #fff; padding: 5px 12px; border-radius: 20px; font-size: 0.8em; font-weight: bold; font-family: monospace; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .run-id-display { font-family: monospace; font-size: 0.9em; color: #64748b; margin-top: 5px; }
+
+        .container { display: grid; grid-template-columns: 350px 1fr; gap: 20px; }
+        @media (max-width: 1300px) { .container { grid-template-columns: 1fr; } }
+
+        .card { background: var(--card); padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }
+        .card h3 { margin-top: 0; border-bottom: 2px solid #f1f5f9; padding-bottom: 12px; font-size: 1.1em; }
+
+        label { display: block; font-weight: 700; margin-bottom: 6px; color: #334155; font-size: 0.95em; margin-top: 12px; }
+        .hint { font-size: 0.85em; color: #64748b; margin-bottom: 8px; font-weight: normal; }
+        
+        select, textarea, input[type="range"] { width: 100%; padding: 10px; border: 2px solid #cbd5e1; border-radius: 8px; font-size: 13px; background: #fff; box-sizing: border-box; transition: border-color 0.2s; }
+        select:focus, textarea:focus { border-color: var(--primary); outline: none; }
+        textarea { height: 120px; font-family: monospace; resize: vertical; }
+        
+        .range-wrap { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+        .range-val { font-weight: bold; color: var(--primary); min-width: 30px; }
+        optgroup { font-weight: 800; color: #1e293b; background: #f1f5f9; }
+
+        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 15px; }
+        .btn-full { grid-column: span 2; }
+        button { padding: 12px; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; color: white; transition: 0.2s; font-size: 13px; }
+        
+        .btn-start { background: #3b82f6; } .btn-start:hover { background: #2563eb; }
+        .btn-pipe { background: #7c3aed; } .btn-pipe:hover { background: #6d28d9; }
+        .btn-stop { background: var(--danger); } .btn-stop:hover { background: #dc2626; }
+        .btn-stop.active { background: #ef4444; box-shadow: 0 0 10px rgba(239, 68, 68, 0.5); }
+        .btn-csv { background: #10b981; } .btn-csv:hover { background: #059669; }
+        .btn-report { background: #0f172a; } .btn-report:hover { background: #334155; }
+        button:disabled { background: #cbd5e1; cursor: not-allowed; opacity: 0.7; }
+        button.ready { background: #10b981; color: white; }
+
+        .table-container { height: 750px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 8px; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed; }
+        th { background: #f8fafc; padding: 10px; text-align: left; position: sticky; top: 0; z-index: 10; border-bottom: 2px solid #e2e8f0; white-space: nowrap; }
+        td { padding: 8px; border-bottom: 1px solid #f1f5f9; vertical-align: top; line-height: 1.4; word-wrap: break-word; }
+
+        .col-id { width: 40px; text-align: center; color: #94a3b8; }
+        .col-q { width: 18%; }
+        .col-meta { width: 90px; font-size: 11px; color: #64748b; background: #fafafa; }
+        .col-a { width: 25%; }
+        .col-stat { width: 70px; text-align: center; font-size:11px; }
+        .col-judge { width: 20%; background: #f5f3ff; border-left: 2px solid #ddd6fe; }
+        .col-human { width: 22%; border-left: 2px solid #e2e8f0; }
+
+        .tag { padding: 2px 4px; border-radius: 3px; font-weight: bold; display: inline-block; margin-bottom: 2px; font-size: 10px; }
+        .bg-easy { background: #dcfce7; color: #166534; } .bg-hard { background: #fee2e2; color: #991b1b; }
+        .bg-veri { background: #dbeafe; color: #1e40af; } .bg-ambi { background: #ffedd5; color: #9a3412; }
+        .stat-badge { display: block; background: #f1f5f9; border-radius: 4px; padding: 2px; margin-bottom: 2px; font-family: monospace; }
+
+        .judge-box { font-family: monospace; color: var(--judge); font-weight: bold; font-size: 12px; }
+        .res-type { font-weight: bold; display: block; margin-bottom: 2px; }
+        .eval-btns { display: flex; flex-wrap: wrap; gap: 2px; margin-top: 5px; }
+        .eval-btn { padding: 4px; font-size: 10px; border: 1px solid #cbd5e1; background: white; color: #64748b; cursor: pointer; flex: 1; text-align: center; border-radius: 4px; }
+        .eval-btn.selected { color: white; border-color: transparent; }
+        
+        .eval-btn[data-val="OK"].selected { background: var(--success); }
+        .eval-btn[data-val="A"].selected { background: var(--danger); }
+        .eval-btn[data-val="B"].selected { background: #f59e0b; }
+        .eval-btn[data-val="C"].selected { background: #ea580c; }
+        .eval-btn[data-val="D"].selected { background: #64748b; }
+
+        #strategySelect { border-left: 4px solid var(--judge); }
+        #errorDisplay { color: var(--danger); font-size: 0.8em; text-align: center; margin-top: 5px; display: none; }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>🧪 2026 GPT 幻覺量化評測實驗室</h1>
+    <div style="margin-top: 5px;">
+        <span class="badge">V13.1 COST OPTIMIZED</span>
+        <div id="currentRunID" class="run-id-display">Run ID: -</div>
+    </div>
+</header>
+
+<div class="container">
+    <div class="card">
+        <h3>🎛️ 實驗參數設定 (Parameters)</h3>
+        
+        <label>1. 模型選擇 (Model)</label>
+        <div class="hint">請依據 RQ 選擇對應模型。RQ3 請固定使用 GPT-o3 Thinking。</div>
+        <select id="modelSelect">
+            <optgroup label="RQ1: 世代演化 (Generation)">
+                <option value="gpt-4o">GPT-4o (2024 Baseline)</option>
+                <option value="gpt-5.2">GPT-5.2 (2026 Flagship)</option>
+            </optgroup>
+            <optgroup label="RQ2: 規模參數 (Scale)">
+                <option value="gpt-4o-mini">GPT-4o Mini (Small)</option>
+                <option value="gpt-5-nano">GPT-5 Nano (Tiny)</option>
+            </optgroup>
+            <optgroup label="RQ3: 推理基準 (Reasoning Base)">
+                 <option value="o3">o3 (Reasoning)</option>
+            </optgroup>
+        </select>
+
+        <label>2. 提示策略 (Strategy)</label>
+        <div class="hint">RQ3 變因。請在固定模型下切換策略。</div>
+        <select id="strategySelect">
+            <option value="baseline">🟢 Baseline (基準線 - 無干預)</option>
+            <option value="expert">🔵 Expert Persona (專家角色)</option>
+            <option value="cot">🔴 Defensive CoT (防禦性思維鏈)</option>
+        </select>
+
+        <label>3. 溫度控制 (Temperature)</label>
+        <div class="range-wrap">
+            <input type="range" id="tempRange" min="0" max="1" step="0.1" value="0.7" oninput="document.getElementById('tempVal').innerText=this.value">
+            <span class="range-val" id="tempVal">0.7</span>
+        </div>
+
+        <label>4. 題目輸入 (CSV 格式)</label>
+        <div class="hint">支援引號 CSV。格式: 題目,難度,查證性</div>
+        <textarea id="csvInput" placeholder='賴清德是誰?,Easy,Verifiable&#10;"李白, 杜甫是誰?",Medium,Verifiable'></textarea>
+        
+        <div class="btn-grid">
+            <button class="btn-start" onclick="startExp(false)" id="btnStart">▶ 執行實驗 (Start)<br><span style="font-size:10px; opacity:0.8;">僅選手回答 (Pilot)</span></button>
+            <button class="btn-pipe" onclick="startExp(true)" id="btnPipe">▶ 啟動流水線 (Pipeline)<br><span style="font-size:10px; opacity:0.8;">選手 + 裁判 (Production)</span></button>
+            
+            <button class="btn-stop btn-full" onclick="stopExp()" id="btnStop" disabled>⏹ 強制停止 (Stop)</button>
+            
+            <button class="btn-csv" onclick="downloadCSV('basic')" id="btnCsv" disabled>📥 下載基礎數據</button>
+            <button class="btn-report" onclick="downloadCSV('full')" id="btnReport" disabled>📥 下載完整報告 (Full Analysis)</button>
+        </div>
+        
+        <div style="background:#e2e8f0; height:6px; border-radius:3px; margin:15px 0;">
+            <div id="progressBar" style="height:100%; width:0%; background:#2563eb; transition:0.3s;"></div>
+        </div>
+        <div id="errorDisplay"></div>
+    </div>
+
+    <div class="card">
+        <h3>📊 評測結果 (Results)
+            <span style="font-size:0.7em; color:#64748b; font-weight:normal; margin-left:10px;">GPT-4o 裁判機制 (字數限制啟用)</span>
+        </h3>
+        <div class="table-container">
+            <table id="resTable">
+                <thead>
+                    <tr>
+                        <th class="col-id">#</th>
+                        <th class="col-q">題目 (Question)</th>
+                        <th class="col-meta">屬性 (Meta)</th>
+                        <th class="col-a">AI 回應 (Subject Answer)</th>
+                        <th class="col-stat">統計</th>
+                        <th class="col-judge">🤖 AI 裁判 (Judge)</th>
+                        <th class="col-human">👤 人類複查</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td colspan="7" style="text-align:center; padding:50px; color:#94a3b8;">等待指令...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    let isRunning = false;
+    let resultsLog = [];
+    let currentRunID = "";
+    let abortController = null;
+
+    // === V13.0 工程核心：強固 CSV Parser ===
+    function parseCSVLine(text) {
+        if (!text) return [];
+        const re = /(?:^|,)(?:"([^"]*)"|([^",]*))/g;
+        const result = [];
+        let match;
+        while ((match = re.exec(text))) {
+            let val = match[1] || match[2] || "";
+            result.push(val.trim());
+        }
+        return result;
+    }
+
+    function generateRunID() {
+        const now = new Date();
+        const timeStr = now.toISOString().replace(/[-:T.]/g, "").slice(0, 14);
+        return `RUN_${timeStr}`;
+    }
+
+    // === V13.1 研究核心：省錢版裁判 Rubric ===
+    // 關鍵修改：加入 "reason 必須在 20 字以內" 的強制指令
+    const JUDGE_TEMPLATE = `
+    任務：請擔任事實查核員，針對「選手回答」進行評分。
+    題目：{Q}
+    屬性：{META}
+    選手回答：{A}
+    
+    評分標準 (Rubric)：
+    - Type_A (Correct): 完全正確，無幻覺。
+    - Type_B (Minor Error): 核心正確，但細節微小錯誤。
+    - Type_C (Hallucination): 嚴重錯誤，無中生有或張冠李戴。
+    - Type_D (Refusal): 模型拒絕回答，或回答「我不知道」。
+    
+    請務必以 JSON 格式回傳，且 reason (評語) 必須在 20 個字以內 (Be extremely concise)：
+    {"type": "Type_X", "reason": "20字以內的簡短理由"}
+    `;
+
+    async function startExp(usePipeline) {
+        const rawCsv = document.getElementById('csvInput').value.trim();
+        if(!rawCsv) { alert("請貼上 CSV 題庫！"); return; }
+        
+        currentRunID = generateRunID();
+        document.getElementById('currentRunID').innerText = `Run ID: ${currentRunID}`;
+        document.getElementById('errorDisplay').style.display = 'none';
+        abortController = new AbortController();
+        
+        const lines = rawCsv.split('\n');
+        const tasks = [];
+        
+        for (let line of lines) {
+            if (!line.trim()) continue;
+            const parts = parseCSVLine(line);
+            if (parts.length > 0) {
+                tasks.push({ 
+                    q: parts[0], 
+                    diff: parts[1] || "Unknown", 
+                    veri: parts[2] || "Unknown" 
+                });
+            }
+        }
+
+        const model = document.getElementById('modelSelect').value;
+        const strategy = document.getElementById('strategySelect').value;
+        const temp = document.getElementById('tempRange').value;
+        
+        isRunning = true;
+        resultsLog = [];
+        updateUI(true);
+        document.querySelector('#resTable tbody').innerHTML = '';
+
+        for(let i=0; i<tasks.length; i++) {
+            if(!isRunning) break;
+            const task = tasks[i];
+            updateProgress(i+1, tasks.length);
+
+            let finalPrompt = task.q;
+            if(strategy === 'expert') {
+                finalPrompt = "你是一位專精於台灣繁體中文歷史、地理與文化的資深研究員。你的回答必須嚴格基於台灣在地的史實與現況，避免使用中國大陸用語或非台灣觀點的資訊。\n\n" + task.q;
+            } else if(strategy === 'cot') {
+                finalPrompt = task.q + "\n\n[系統指令] 請執行以下防禦性思考步驟：\n1. 事實查核：確認問題中提到的人、事、時、地是否在台灣歷史上真實存在。\n2. 邏輯檢驗：檢查是否存在年代錯置或邏輯矛盾。\n3. 結論：若確認資訊有誤或資料不足，請直接回答『我不知道』或指出題目錯誤，切勿編造。";
+            }
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td class="col-id">${i+1}</td>
+                <td><div style="max-height:80px; overflow-y:auto;" class="q-text"></div></td>
+                <td>
+                    <span class="tag ${task.diff==='Hard'?'bg-hard':'bg-easy'}">${task.diff}</span><br>
+                    <span class="tag ${task.veri==='Ambiguous'?'bg-ambi':'bg-veri'}">${task.veri}</span>
+                </td>
+                <td style="color:#64748b;" class="a-text">處理中...</td>
+                <td style="text-align:center;">-</td>
+                <td style="color:#ddd6fe;">${usePipeline ? "(Waiting)" : "-"}</td>
+                <td>-</td>
+            `;
+            tr.querySelector('.q-text').textContent = task.q;
+            document.querySelector('#resTable tbody').appendChild(tr);
+            scrollToBottom();
+
+            let rowData = { 
+                run_id: currentRunID,
+                id: i+1, ...task, model, strategy, temp, 
+                a: "", len: 0, latency: 0, 
+                judge_type: "-", judge_reason: "-", judge_lat: 0,
+                human_type: "" 
+            };
+            
+            try {
+                // 1. 主實驗
+                const startT = Date.now();
+                const res1 = await fetch('/api/generate', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ prompt: finalPrompt, model: model, temperature: parseFloat(temp) }),
+                    signal: abortController.signal
+                });
+                
+                if (!res1.ok) throw new Error(`Status ${res1.status}`);
+                const json1 = await res1.json();
+                
+                rowData.a = json1.output || json1.result || "";
+                rowData.len = rowData.a.length;
+                rowData.latency = Date.now() - startT;
+
+                const tdAnswer = tr.querySelector('.a-text');
+                tdAnswer.textContent = rowData.a; 
+                tdAnswer.style.color = "#1e293b";
+                
+                tr.children[4].innerHTML = `
+                    <span class="stat-badge">${rowData.len}字</span>
+                    <span class="stat-badge" style="color:${rowData.latency>2000?'#e11d48':'#059669'}">${rowData.latency}ms</span>
+                `;
+
+                // 2. 流水線 (Judge) - 成本優化
+                if(usePipeline) {
+                    tr.children[5].innerText = "🤖 閱卷...";
+                    const judgePrompt = JUDGE_TEMPLATE
+                        .replace('{Q}', task.q)
+                        .replace('{META}', `${task.diff}, ${task.veri}`)
+                        .replace('{A}', rowData.a);
+
+                    const jStart = Date.now();
+                    const res2 = await fetch('/api/generate', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({ prompt: judgePrompt, model: 'gpt-4o' }),
+                        signal: abortController.signal
+                    });
+                    const json2 = await res2.json();
+                    rowData.judge_lat = Date.now() - jStart;
+                    
+                    try {
+                        let cleanJson = (json2.output || json2.result).replace(/```json|```/g, '').trim();
+                        const jRes = JSON.parse(cleanJson);
+                        rowData.judge_type = jRes.type;
+                        rowData.judge_reason = jRes.reason;
+                        
+                        tr.children[5].innerHTML = `
+                            <div class="judge-box">
+                                <span class="res-type">${jRes.type}</span>
+                                <span style="font-size:10px; color:#475569;">${jRes.reason}</span>
+                            </div>`;
+                    } catch(e) {
+                        tr.children[5].innerText = "Parse Error";
+                    }
+                }
+
+                tr.children[6].innerHTML = `
+                    <div class="eval-btns" id="btns-${i}">
+                        <button class="eval-btn" data-val="OK" onclick="setHumanLabel(${i}, 'OK', this)">OK</button>
+                        <button class="eval-btn" data-val="A" onclick="setHumanLabel(${i}, 'Type_A', this)">A</button>
+                        <button class="eval-btn" data-val="B" onclick="setHumanLabel(${i}, 'Type_B', this)">B</button>
+                        <button class="eval-btn" data-val="C" onclick="setHumanLabel(${i}, 'Type_C', this)">C</button>
+                        <button class="eval-btn" data-val="D" onclick="setHumanLabel(${i}, 'Type_D', this)">D</button>
+                    </div>
+                `;
+
+            } catch(e) {
+                if (e.name === 'AbortError') {
+                    tr.children[3].innerText = "🛑 已中斷";
+                } else {
+                    tr.children[3].innerText = "Error: " + e.message;
+                    document.getElementById('errorDisplay').innerText = `Error at #${i+1}: ${e.message}`;
+                    document.getElementById('errorDisplay').style.display = 'block';
+                }
+            }
+
+            resultsLog.push(rowData);
+            if(i < tasks.length-1 && isRunning) await new Promise(r => setTimeout(r, usePipeline ? 1500 : 1000));
+        }
+
+        isRunning = false;
+        updateUI(false);
+    }
+
+    window.setHumanLabel = function(idx, val, btn) {
+        if(resultsLog[idx]) resultsLog[idx].human_type = val;
+        const parent = document.getElementById(`btns-${idx}`);
+        parent.querySelectorAll('.eval-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+    };
+
+    function stopExp() { 
+        isRunning = false; 
+        if(abortController) abortController.abort();
+    }
+    
+    function downloadCSV(mode) {
+        if(resultsLog.length === 0) return;
+        let csv = "";
+        
+        if(mode === 'basic') {
+            csv = "\uFEFFRun_ID,ID,Question,Model,Strategy,Answer,Length,Latency,Human_Validation\n";
+            resultsLog.forEach((r) => {
+                const safeA = r.a.replace(/"/g, '""').replace(/\n/g, ' ');
+                csv += `${r.run_id},${r.id},"${r.q}",${r.model},${r.strategy},"${safeA}",${r.len},${r.latency},${r.human_type}\n`;
+            });
+        } else {
+            csv = "\uFEFFRun_ID,ID,Question,Difficulty,Verifiability,Model,Strategy,Temperature,Answer,Length,Latency,Judge_Type,Judge_Reason,Judge_Latency,Human_Validation\n";
+            resultsLog.forEach((r) => {
+                const safeA = r.a.replace(/"/g, '""').replace(/\n/g, ' ');
+                csv += `${r.run_id},${r.id},"${r.q}",${r.diff},${r.veri},${r.model},${r.strategy},${r.temp},"${safeA}",${r.len},${r.latency},${r.judge_type},"${r.judge_reason}",${r.judge_lat},${r.human_type}\n`;
+            });
+        }
+
+        const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = `GPT_Exp_${currentRunID}_${mode}.csv`;
+        link.click();
+    }
+
+    function updateUI(busy) {
+        document.getElementById('btnStart').disabled = busy;
+        document.getElementById('btnPipe').disabled = busy;
+        document.getElementById('btnCsv').disabled = busy;
+        document.getElementById('btnReport').disabled = busy;
+        const stopBtn = document.getElementById('btnStop');
+        stopBtn.disabled = !busy;
+        if(busy) stopBtn.classList.add('active'); else stopBtn.classList.remove('active');
+    }
+    function updateProgress(c, t) { document.getElementById('progressBar').style.width = (c/t)*100 + "%"; }
+    function scrollToBottom() { const d = document.querySelector('.table-container'); d.scrollTop = d.scrollHeight; }
+</script>
+
+</body>
+</html>
