@@ -1,0 +1,12 @@
+{
+  "name": "gpt-hallucination-research-v6",
+  "version": "6.0.0",
+  "description": "Empirical Analysis of GPT-4 vs GPT-5 Hallucination Patterns",
+  "engines": {
+    "node": "24.x"
+  },
+  "dependencies": {
+    "openai": "^4.28.0",
+    "cors": "^2.8.5"
+  }
+}
